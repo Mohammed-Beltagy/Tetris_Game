@@ -1,0 +1,38 @@
+body {
+  background-color: #222;
+}
+.grid {
+  --unit: 30px;
+  position: relative;
+  width: calc(var(--unit) * 11);
+  height: calc(var(--unit) * 21);
+  margin: var(--unit) auto 0;
+  border: 2px solid #ccc;
+  border-top: none;
+}
+.gird > * {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+/* Background Design */
+.grid .horizontal-line {
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  background-color: #888;
+  transform: translateY(50%);
+}
+.grid .vertical-line {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background-color: #888;
+  transform: translateX(-50%);
+}
+/* Blocks Design */
+.playground .cell {
+  position: absolute;
+  width: var(--unit);
+  height: var(--unit);
+}
