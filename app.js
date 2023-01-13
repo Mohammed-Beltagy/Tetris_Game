@@ -90,6 +90,21 @@ class Smashboy {
     clearInterval(this.autoFall);
     newBlock();
   }
+  /*  remove the block cells from (gridCols)
+      => so you can change the position and add cells again */
+  #removeFromGrid() {
+    this.cells.forEach((cell, index) => {
+      gridCols[this.cellsPosByIndex[index].x][this.cellsPosByIndex[index].y] =
+        undefined;
+    });
+  }
+  // add the block cells to (gridCols)
+  #addToGrid() {
+    this.cells.forEach((cell, index) => {
+      gridCols[this.cellsPosByIndex[index].x][this.cellsPosByIndex[index].y] =
+        cell;
+    });
+  }
 
   move(direction) {
     // Move To Specific Direction If The Space Is Free And The Block Didn't Reach To Bottom
@@ -100,21 +115,16 @@ class Smashboy {
         this.stopBlock();
       } else {
         // remove the block from the grid
-        this.cells.forEach((cell, index) => {
-          gridCols[this.cellsPosByIndex[index].x][
-            this.cellsPosByIndex[index].y
-          ] = undefined;
-        });
+        this.#removeFromGrid();
         // modify the position to the new position
         this.cells.forEach((cell, index) => {
           this.cellsPosByIndex[index].y += 1;
           this.cellsPosByPixel[index].y += unit;
-          gridCols[this.cellsPosByIndex[index].x][
-            this.cellsPosByIndex[index].y
-          ] = cell;
           // move the block
           cell.style.top = this.cellsPosByPixel[index].y + "px";
         });
+        // refresh the postion in (gridCols)
+        this.#addToGrid();
       }
     }
     if (direction === "left") {
@@ -122,21 +132,16 @@ class Smashboy {
         return;
       } else {
         // remove the block from the grid
-        this.cells.forEach((cell, index) => {
-          gridCols[this.cellsPosByIndex[index].x][
-            this.cellsPosByIndex[index].y
-          ] = undefined;
-        });
+        this.#removeFromGrid();
         // modify the position to the new position
         this.cells.forEach((cell, index) => {
           this.cellsPosByIndex[index].x -= 1;
           this.cellsPosByPixel[index].x -= unit;
-          gridCols[this.cellsPosByIndex[index].x][
-            this.cellsPosByIndex[index].y
-          ] = cell;
           // move the block
           cell.style.left = this.cellsPosByPixel[index].x + "px";
         });
+        // refresh the postion in (gridCols)
+        this.#addToGrid();
       }
     }
     if (direction === "right") {
@@ -144,21 +149,16 @@ class Smashboy {
         return;
       } else {
         // remove the block from the grid
-        this.cells.forEach((cell, index) => {
-          gridCols[this.cellsPosByIndex[index].x][
-            this.cellsPosByIndex[index].y
-          ] = undefined;
-        });
+        this.#removeFromGrid();
         // modify the position to the new position
         this.cells.forEach((cell, index) => {
           this.cellsPosByIndex[index].x += 1;
           this.cellsPosByPixel[index].x += unit;
-          gridCols[this.cellsPosByIndex[index].x][
-            this.cellsPosByIndex[index].y
-          ] = cell;
           // move the block
           cell.style.left = this.cellsPosByPixel[index].x + "px";
         });
+        // refresh the postion in (gridCols)
+        this.#addToGrid();
       }
     }
   }
@@ -248,6 +248,7 @@ class Hero extends Smashboy {
     this.autoFall; // interval to fall down
     this.fallTime = 1000;
     this.stopped = false;
+    this.angle = 0; // used for (rotate) function
   }
 }
 
