@@ -92,14 +92,14 @@ class Smashboy {
   }
   /*  remove the block cells from (gridCols)
       => so you can change the position and add cells again */
-  #removeFromGrid() {
+  removeFromGrid() {
     this.cells.forEach((cell, index) => {
       gridCols[this.cellsPosByIndex[index].x][this.cellsPosByIndex[index].y] =
         undefined;
     });
   }
   // modify (cellsPosByPx) , (style.left & style.top) & (gridCols) depending on (cellsPosByIndex)
-  #changePos() {
+  changePos() {
     this.cellsPosByIndex.forEach((cellPos, index) => {
       // modify (gridCols)
       gridCols[cellPos.x][cellPos.y] = this.cells[index];
@@ -121,13 +121,13 @@ class Smashboy {
         this.stopBlock();
       } else {
         // remove the block from the grid
-        this.#removeFromGrid();
+        this.removeFromGrid();
         // modify the position to the new position
         this.cellsPosByIndex.forEach((cellPox) => {
           cellPox.y += 1;
         });
         // refresh the postion
-        this.#changePos();
+        this.changePos();
       }
     }
     if (direction === "left") {
@@ -135,13 +135,13 @@ class Smashboy {
         return;
       } else {
         // remove the block from the grid
-        this.#removeFromGrid();
+        this.removeFromGrid();
         // modify the position to the new position
         this.cellsPosByIndex.forEach((cellPox) => {
           cellPox.x -= 1;
         });
         // refresh the postion
-        this.#changePos();
+        this.changePos();
       }
     }
     if (direction === "right") {
@@ -149,13 +149,13 @@ class Smashboy {
         return;
       } else {
         // remove the block from the grid
-        this.#removeFromGrid();
+        this.removeFromGrid();
         // modify the position to the new position
         this.cellsPosByIndex.forEach((cellPox) => {
           cellPox.x += 1;
         });
         // refresh the postion
-        this.#changePos();
+        this.changePos();
       }
     }
   }
@@ -246,6 +246,107 @@ class Hero extends Smashboy {
     this.fallTime = 1000;
     this.stopped = false;
     this.angle = 0; // used for (rotate) function
+  }
+
+  // rotate function
+  rotate() {
+    if (this.angle == 0) {
+      // switch from horizontal to vertical
+      this.angle = 90;
+
+      // remove the block from the grid
+      this.removeFromGrid();
+
+      // change the position by index
+      /* if the space is free aroun cell[1] the rotate around it
+         else if the space is free aroun cell[2] the rotate around it
+         else do nothing */
+      if (
+        gridCols[this.cellsPosByIndex[1].x][this.cellsPosByIndex[1].y + 1] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[1].x][this.cellsPosByIndex[1].y - 1] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[1].x][this.cellsPosByIndex[1].y - 2] ==
+          undefined
+      ) {
+        this.cellsPosByIndex[0].x += 1;
+        this.cellsPosByIndex[0].y += 1;
+
+        this.cellsPosByIndex[2].x -= 1;
+        this.cellsPosByIndex[2].y -= 1;
+
+        this.cellsPosByIndex[3].x -= 2;
+        this.cellsPosByIndex[3].y -= 2;
+      } else if (
+        gridCols[this.cellsPosByIndex[2].x][this.cellsPosByIndex[2].y + 1] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[2].x][this.cellsPosByIndex[2].y - 1] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[2].x][this.cellsPosByIndex[2].y - 2] ==
+          undefined
+      ) {
+        this.cellsPosByIndex[0].x += 2;
+        this.cellsPosByIndex[0].y += 1;
+
+        this.cellsPosByIndex[1].x += 1;
+
+        this.cellsPosByIndex[2].y -= 1;
+
+        this.cellsPosByIndex[3].x -= 1;
+        this.cellsPosByIndex[3].y -= 2;
+      }
+
+      // refresh the position
+      this.changePos();
+    } else {
+      // switch from vertical to horizontal
+      this.angle = 0;
+
+      // remove the block from the grid
+      this.removeFromGrid();
+
+      // change the position by index
+      /* if the space is free aroun cell[1] the rotate around it
+         else if the space is free aroun cell[0] the rotate around it
+         else do nothing */
+      if (
+        gridCols[this.cellsPosByIndex[1].x - 1][this.cellsPosByIndex[1].y] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[1].x + 1][this.cellsPosByIndex[1].y] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[1].x + 2][this.cellsPosByIndex[1].y] ==
+          undefined
+      ) {
+        this.cellsPosByIndex[0].x -= 1;
+        this.cellsPosByIndex[0].y -= 1;
+
+        this.cellsPosByIndex[2].x += 1;
+        this.cellsPosByIndex[2].y += 1;
+
+        this.cellsPosByIndex[3].x += 2;
+        this.cellsPosByIndex[3].y += 2;
+      } else if (
+        gridCols[this.cellsPosByIndex[0].x - 1][this.cellsPosByIndex[0].y] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[0].x + 1][this.cellsPosByIndex[0].y] ==
+          undefined &&
+        gridCols[this.cellsPosByIndex[0].x + 2][this.cellsPosByIndex[0].y] ==
+          undefined
+      ) {
+        this.cellsPosByIndex[0].x -= 1;
+
+        this.cellsPosByIndex[1].y += 1;
+
+        this.cellsPosByIndex[2].x += 1;
+        this.cellsPosByIndex[2].y += 2;
+
+        this.cellsPosByIndex[3].x += 2;
+        this.cellsPosByIndex[3].y += 3;
+      }
+
+      // refresh the position
+      this.changePos();
+    }
   }
 }
 
