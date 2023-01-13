@@ -98,11 +98,17 @@ class Smashboy {
         undefined;
     });
   }
-  // add the block cells to (gridCols)
-  #addToGrid() {
-    this.cells.forEach((cell, index) => {
-      gridCols[this.cellsPosByIndex[index].x][this.cellsPosByIndex[index].y] =
-        cell;
+  // modify (cellsPosByPx) , (style.left & style.top) & (gridCols) depending on (cellsPosByIndex)
+  #changePos() {
+    this.cellsPosByIndex.forEach((cellPos, index) => {
+      // modify (gridCols)
+      gridCols[cellPos.x][cellPos.y] = this.cells[index];
+      // modify (cellsPosByPx)
+      this.cellsPosByPixel[index].x = cellPos.x * unit;
+      this.cellsPosByPixel[index].y = cellPos.y * unit;
+      // modify (style)
+      this.cells[index].style.left = this.cellsPosByPixel[index].x + "px";
+      this.cells[index].style.top = this.cellsPosByPixel[index].y + "px";
     });
   }
 
@@ -117,14 +123,11 @@ class Smashboy {
         // remove the block from the grid
         this.#removeFromGrid();
         // modify the position to the new position
-        this.cells.forEach((cell, index) => {
-          this.cellsPosByIndex[index].y += 1;
-          this.cellsPosByPixel[index].y += unit;
-          // move the block
-          cell.style.top = this.cellsPosByPixel[index].y + "px";
+        this.cellsPosByIndex.forEach((cellPox) => {
+          cellPox.y += 1;
         });
-        // refresh the postion in (gridCols)
-        this.#addToGrid();
+        // refresh the postion
+        this.#changePos();
       }
     }
     if (direction === "left") {
@@ -134,14 +137,11 @@ class Smashboy {
         // remove the block from the grid
         this.#removeFromGrid();
         // modify the position to the new position
-        this.cells.forEach((cell, index) => {
-          this.cellsPosByIndex[index].x -= 1;
-          this.cellsPosByPixel[index].x -= unit;
-          // move the block
-          cell.style.left = this.cellsPosByPixel[index].x + "px";
+        this.cellsPosByIndex.forEach((cellPox) => {
+          cellPox.x -= 1;
         });
-        // refresh the postion in (gridCols)
-        this.#addToGrid();
+        // refresh the postion
+        this.#changePos();
       }
     }
     if (direction === "right") {
@@ -151,14 +151,11 @@ class Smashboy {
         // remove the block from the grid
         this.#removeFromGrid();
         // modify the position to the new position
-        this.cells.forEach((cell, index) => {
-          this.cellsPosByIndex[index].x += 1;
-          this.cellsPosByPixel[index].x += unit;
-          // move the block
-          cell.style.left = this.cellsPosByPixel[index].x + "px";
+        this.cellsPosByIndex.forEach((cellPox) => {
+          cellPox.x += 1;
         });
-        // refresh the postion in (gridCols)
-        this.#addToGrid();
+        // refresh the postion
+        this.#changePos();
       }
     }
   }
