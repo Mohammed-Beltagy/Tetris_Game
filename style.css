@@ -10,10 +10,41 @@ body {
   border: 2px solid #ccc;
   border-top: none;
 }
-.gird > * {
+.background,
+.playground,
+.game-alert {
   position: absolute;
   height: 100%;
   width: 100%;
+}
+/* controls */
+.grid::after {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  content: attr(data-after);
+  white-space: break-spaces;
+  text-align: center;
+  position: absolute;
+  top: 100%;
+  color: #fff6;
+  padding: 10px;
+}
+
+/* Game Alert Design */
+.grid .game-alert {
+  background-color: #2227;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+.game-alert h1 {
+  color: #fff;
+}
+.game-alert button {
+  padding: 5px;
 }
 /* Background Design */
 .grid .horizontal-line {
@@ -31,8 +62,18 @@ body {
   transform: translateX(-50%);
 }
 /* Blocks Design */
+.playground {
+  overflow: hidden;
+}
 .playground .cell {
   position: absolute;
   width: var(--unit);
   height: var(--unit);
+}
+.background .cell-shadow {
+  position: absolute;
+  width: var(--unit);
+  height: var(--unit);
+  box-sizing: border-box;
+  opacity: 0.3;
 }
