@@ -167,6 +167,7 @@ class Smashboy {
       cellShadow.remove();
     });
     // create new block
+    checkIfCompleted();
     newBlock();
   }
 
@@ -498,10 +499,43 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-// Set Instructions
-grid.setAttribute(
-  "data-after",
-  `down: s - left: a - right: d - rotate: w
-   instant fall: space
-   IMPORTANT!!!! if you hold space you may lose.`
-);
+// Check If There Are Completed Rows
+function checkIfCompleted() {
+  const completedRowsIndex = new Array();
+  // loop on the rows
+  for (let i = 0; i < rowsCount; i++) {
+    // loop on the cells in the row
+    for (let c = 0; c < colsCount; c++) {
+      /* if the cell is free break the loop in the row
+          else => if this is the last cell and not free push Row Index into the Array*/
+      if (gridCols[c][i] === undefined) {
+        break;
+      } else if (c == colsCount - 1) {
+        completedRowsIndex.push(i);
+      }
+    }
+  }
+  // remove completed rows
+  if (completedRowsIndex.length > 0) {
+    for (let i = 0; i < completedRowsIndex.length; i++) {
+      // delete cells from Grid and Body
+      for (let c = 0; c < colsCount; c++) {
+        gridCols[c][completedRowsIndex[i]].remove();
+        delete gridCols[c][completedRowsIndex[i]];
+      }
+      // make the heigher rows fall down
+      for (let r = completedRowsIndex[i]; r >= 0; r--) {
+        for (let c = 0; c < colsCount; c++) {
+          // if there are any cell heigher make it fall down
+          if (gridCols[c][r - 1] != undefined) {
+            gridCols[c][r - 1].style.top = r * unit + "px";
+          }
+          // change the pos in grid even if undefined
+          gridCols[c][r] = gridCols[c][r - 1];
+        }
+      }
+    }
+  }
+
+  score += completedRowsIndex.length * 16;
+}

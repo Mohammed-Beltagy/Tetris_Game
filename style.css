@@ -21,7 +21,7 @@ body {
 .grid::after {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
-  content: attr(data-after);
+  content: "down: s - left: a - right: d - rotate: w - instant fall: space \a IMPORTANT!!!! if you hold space you may lose.";
   white-space: break-spaces;
   text-align: center;
   position: absolute;
