@@ -38,6 +38,50 @@ function resetGrid() {
 // will be changed to true if the is no space for the current block
 let colIsFull = false;
 
+// Check If The Cells Are Stucked Or Not Depending on Index {x: -, y: -}
+function ifStucked(direction, ...cellsIndex) {
+  let stucked = false;
+  if (direction === "top") {
+    for (let i = 0; i < cellsIndex.length; i++) {
+      if (gridCols[cellsIndex[i].x][cellsIndex[i].y - 1] !== undefined) {
+        stucked = true;
+        break;
+      }
+    }
+  } else if (direction === "right") {
+    for (let i = 0; i < cellsIndex.length; i++) {
+      if (
+        cellsIndex[i].x >= colsCount - 1 ||
+        gridCols[cellsIndex[i].x + 1][cellsIndex[i].y] !== undefined
+      ) {
+        stucked = true;
+        break;
+      }
+    }
+  } else if (direction === "down") {
+    for (let i = 0; i < cellsIndex.length; i++) {
+      if (
+        cellsIndex[i].y == rowsCount - 1 ||
+        gridCols[cellsIndex[i].x][cellsIndex[i].y + 1] !== undefined
+      ) {
+        stucked = true;
+        break;
+      }
+    }
+  } else if (direction === "left") {
+    for (let i = 0; i < cellsIndex.length; i++) {
+      if (
+        cellsIndex[i].x <= 0 ||
+        gridCols[cellsIndex[i].x - 1][cellsIndex[i].y] !== undefined
+      ) {
+        stucked = true;
+        break;
+      }
+    }
+  }
+  return stucked;
+}
+
 // Create the (Square) block
 class Smashboy {
   constructor() {
@@ -247,63 +291,13 @@ class Smashboy {
   }
 
   stuckedDown() {
-    let stucked = false;
-    let bottomIndex = 0; // get the lower cell index
-    this.cellsPosByIndex.forEach((cellPos) => {
-      if (cellPos.y > bottomIndex) {
-        bottomIndex = cellPos.y;
-      }
-    });
-    // check if there is no space under than the bottom cells
-    this.cellsPosByIndex.forEach((cellPos) => {
-      if (
-        cellPos.y === bottomIndex &&
-        (cellPos.y >= rowsCount - 1 ||
-          gridCols[cellPos.x][cellPos.y + 1] != undefined)
-      ) {
-        stucked = true;
-      }
-    });
-    return stucked;
+    return ifStucked("down", this.cellsPosByIndex[2], this.cellsPosByIndex[3]);
   }
   stuckedLeft() {
-    let stucked = false,
-      leftIndex = colsCount - 1; // get the left-side cell index
-    this.cellsPosByIndex.forEach((cellPos) => {
-      if (cellPos.x <= leftIndex) {
-        leftIndex = cellPos.x;
-      }
-    });
-    // check if there is no space left than the left cells
-    this.cellsPosByIndex.forEach((cellPos) => {
-      if (
-        cellPos.x === leftIndex &&
-        (cellPos.x <= 0 || gridCols[cellPos.x - 1][cellPos.y] != undefined)
-      ) {
-        stucked = true;
-      }
-    });
-    return stucked;
+    return ifStucked("left", this.cellsPosByIndex[0], this.cellsPosByIndex[2]);
   }
   stuckedRight() {
-    let stucked = false,
-      rightIndex = 0; // get the right-side cell index
-    this.cellsPosByIndex.forEach((cellPos) => {
-      if (cellPos.x > rightIndex) {
-        rightIndex = cellPos.x;
-      }
-    });
-    // check if there is no space right than the right cells
-    this.cellsPosByIndex.forEach((cellPos) => {
-      if (
-        cellPos.x === rightIndex &&
-        (cellPos.x >= colsCount - 1 ||
-          gridCols[cellPos.x + 1][cellPos.y] != undefined)
-      ) {
-        stucked = true;
-      }
-    });
-    return stucked;
+    return ifStucked("right", this.cellsPosByIndex[1], this.cellsPosByIndex[3]);
   }
 }
 
@@ -335,13 +329,12 @@ class Hero extends Smashboy {
 
   // rotate function
   rotate() {
-    if (this.angle == 0) {
+    // remove the block from the grid
+    this.removeFromGrid();
+
+    if (this.angle == 0 || this.angle == 180) {
       // switch from horizontal to vertical
 
-      // remove the block from the grid
-      this.removeFromGrid();
-
-      // change the position by index
       /* if the space is free aroun cell[1] the rotate around it
       else if the space is free aroun cell[2] the rotate around it
          else do nothing */
@@ -362,8 +355,6 @@ class Hero extends Smashboy {
 
         this.cellsPosByIndex[3].x -= 2;
         this.cellsPosByIndex[3].y -= 2;
-
-        this.angle = 90;
       } else if (
         gridCols[this.cellsPosByIndex[2].x][this.cellsPosByIndex[2].y + 1] ==
           undefined &&
@@ -382,22 +373,13 @@ class Hero extends Smashboy {
 
         this.cellsPosByIndex[3].x -= 1;
         this.cellsPosByIndex[3].y -= 2;
-
-        this.angle = 90;
       }
-
-      // refresh the position
-      this.changePos();
     } else {
       // switch from vertical to horizontal
 
-      // remove the block from the grid
-      this.removeFromGrid();
-
-      // change the position by index
       /* if the space is free aroun cell[1] the rotate around it
-         else if the space is free aroun cell[0] the rotate around it
-         else do nothing */
+      else if the space is free aroun cell[0] the rotate around it
+      else do nothing */
       if (
         gridCols[this.cellsPosByIndex[1].x - 1][this.cellsPosByIndex[1].y] ==
           undefined &&
@@ -414,8 +396,6 @@ class Hero extends Smashboy {
 
         this.cellsPosByIndex[3].x += 2;
         this.cellsPosByIndex[3].y += 2;
-
-        this.angle = 0;
       } else if (
         gridCols[this.cellsPosByIndex[0].x - 1][this.cellsPosByIndex[0].y] ==
           undefined &&
@@ -433,21 +413,241 @@ class Hero extends Smashboy {
 
         this.cellsPosByIndex[3].x += 2;
         this.cellsPosByIndex[3].y += 3;
-
-        this.angle = 0;
       }
+    }
+    // refresh the position
+    this.changePos();
+    // change the angle
+    this.angle += 90;
+    if (this.angle == 360) {
+      this.angle = 0;
+    }
+  }
 
-      // refresh the position
-      this.changePos();
+  stuckedDown() {
+    if (this.angle == 0 || this.angle == 180) {
+      return ifStucked("down", ...this.cellsPosByIndex);
+    } else {
+      return ifStucked("down", this.cellsPosByIndex[0]);
+    }
+  }
+  stuckedLeft() {
+    if (this.angle == 0 || this.angle == 180) {
+      return ifStucked("left", this.cellsPosByIndex[0]);
+    } else {
+      return ifStucked("left", ...this.cellsPosByIndex);
+    }
+  }
+  stuckedRight() {
+    if (this.angle == 0 || this.angle == 180) {
+      return ifStucked("right", this.cellsPosByIndex[3]);
+    } else {
+      return ifStucked("right", ...this.cellsPosByIndex);
+    }
+  }
+}
+
+// Create the (wasd) block
+
+class Teewee extends Smashboy {
+  constructor() {
+    super();
+    this.color = "yellow";
+    this.cells = new Array(); // cells will be added on creating the block
+    // the position of every cell [x,y]
+    this.cellsPosByPixel = [
+      { x: 5 * unit, y: -1 * unit },
+      { x: 4 * unit, y: 0 },
+      { x: 5 * unit, y: 0 },
+      { x: 6 * unit, y: 0 },
+    ];
+    this.cellsPosByIndex = [
+      { x: 5, y: -1 },
+      { x: 4, y: 0 },
+      { x: 5, y: 0 },
+      { x: 6, y: 0 },
+    ];
+    this.cellsShadowIndex = [];
+    this.autoFall; // interval to fall down
+    this.fallTime = 1000;
+    this.stopped = false;
+    this.angle = 0; // used for (rotate) function
+  }
+
+  rotate() {
+    // rotate with Clockwise
+
+    // remove the block from the grid
+    this.removeFromGrid();
+
+    // save the current position
+    let savedIndexs = new Array();
+    this.cellsPosByIndex.forEach((pos) => {
+      savedIndexs.push({ ...pos });
+    });
+
+    // Change Position By Index
+    if (this.angle == 0) {
+      // W cell
+      this.cellsPosByIndex[0].x += 1;
+      this.cellsPosByIndex[0].y += 1;
+      // A cell
+      this.cellsPosByIndex[1].x += 1;
+      this.cellsPosByIndex[1].y -= 1;
+      // D cell
+      this.cellsPosByIndex[3].x -= 1;
+      this.cellsPosByIndex[3].y += 1;
+    } else if (this.angle == 90) {
+      // W cell
+      this.cellsPosByIndex[0].x -= 1;
+      this.cellsPosByIndex[0].y += 1;
+      // A cell
+      this.cellsPosByIndex[1].x += 1;
+      this.cellsPosByIndex[1].y += 1;
+      // D cell
+      this.cellsPosByIndex[3].x -= 1;
+      this.cellsPosByIndex[3].y -= 1;
+    } else if (this.angle == 180) {
+      // W cell
+      this.cellsPosByIndex[0].x -= 1;
+      this.cellsPosByIndex[0].y -= 1;
+      // A cell
+      this.cellsPosByIndex[1].x -= 1;
+      this.cellsPosByIndex[1].y += 1;
+      // D cell
+      this.cellsPosByIndex[3].x += 1;
+      this.cellsPosByIndex[3].y -= 1;
+    } else if (this.angle == 270) {
+      // W cell
+      this.cellsPosByIndex[0].x += 1;
+      this.cellsPosByIndex[0].y -= 1;
+      // A cell
+      this.cellsPosByIndex[1].x -= 1;
+      this.cellsPosByIndex[1].y -= 1;
+      // D cell
+      this.cellsPosByIndex[3].x += 1;
+      this.cellsPosByIndex[3].y += 1;
+    }
+
+    // if the block is stucked get the old postion back
+    for (let i = 0; i < this.cellsPosByIndex.length; i++) {
+      if (
+        gridCols[this.cellsPosByIndex[i].x][this.cellsPosByIndex[i].y] !==
+        undefined
+      ) {
+        this.cellsPosByIndex = savedIndexs;
+        this.angle -= 90;
+        break;
+      }
+    }
+
+    // refresh the position
+    this.changePos();
+    // Change The Angle
+    this.angle += 90;
+    if (this.angle == 360) {
+      this.angle = 0;
+    }
+  }
+
+  stuckedDown() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+      case 180:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1]
+        );
+    }
+  }
+  stuckedLeft() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1]
+        );
+      case 90:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 180:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedRight() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+      case 180:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1]
+        );
+      case 270:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
     }
   }
 }
 
 // Insert a new random block
-let blocks = [Smashboy, Hero],
+let blocks = [Smashboy, Hero, Teewee],
   currentBlock;
 function newBlock() {
-  currentBlock = new blocks[Math.floor(Math.random() * 2)]();
+  // currentBlock = new WASD();
+  currentBlock = new blocks[Math.floor(Math.random() * blocks.length)]();
   currentBlock.createBlock();
 }
 
