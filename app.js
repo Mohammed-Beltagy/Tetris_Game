@@ -448,7 +448,6 @@ class Hero extends Smashboy {
 }
 
 // Create the (wasd) block
-
 class Teewee extends Smashboy {
   constructor() {
     super();
@@ -487,7 +486,9 @@ class Teewee extends Smashboy {
     });
 
     // Change Position By Index
-    if (this.angle == 0) {
+    /* Used (this.cellsPosByIndex[-].x) in conditions to prevent setting values on:
+     (gridCols[-n]) , (gridCols[colsCount + n]) or (gridCols[-][rowsCount + n]) */
+    if (this.angle == 0 && this.cellsPosByIndex[1].y < rowsCount - 1) {
       // W cell
       this.cellsPosByIndex[0].x += 1;
       this.cellsPosByIndex[0].y += 1;
@@ -497,7 +498,7 @@ class Teewee extends Smashboy {
       // D cell
       this.cellsPosByIndex[3].x -= 1;
       this.cellsPosByIndex[3].y += 1;
-    } else if (this.angle == 90) {
+    } else if (this.angle == 90 && this.cellsPosByIndex[1].x > 0) {
       // W cell
       this.cellsPosByIndex[0].x -= 1;
       this.cellsPosByIndex[0].y += 1;
@@ -517,7 +518,7 @@ class Teewee extends Smashboy {
       // D cell
       this.cellsPosByIndex[3].x += 1;
       this.cellsPosByIndex[3].y -= 1;
-    } else if (this.angle == 270) {
+    } else if (this.angle == 270 && this.cellsPosByIndex[1].x < colsCount - 1) {
       // W cell
       this.cellsPosByIndex[0].x += 1;
       this.cellsPosByIndex[0].y -= 1;
@@ -527,6 +528,9 @@ class Teewee extends Smashboy {
       // D cell
       this.cellsPosByIndex[3].x += 1;
       this.cellsPosByIndex[3].y += 1;
+    } else {
+      // no rotate so reduce the angle because it will be increased in the end of the methode
+      this.angle -= 90;
     }
 
     // if the block is stucked get the old postion back
@@ -642,11 +646,678 @@ class Teewee extends Smashboy {
   }
 }
 
+// Create the (Orange Ricky) Block
+class OrangeRicky extends Smashboy {
+  constructor() {
+    super();
+    this.color = "orange";
+    this.cells = new Array(); // cells will be added on creating the block
+    // the position of every cell [x,y]
+    this.cellsPosByPixel = [
+      { x: 4 * unit, y: 0 },
+      { x: 5 * unit, y: 0 },
+      { x: 6 * unit, y: 0 },
+      { x: 6 * unit, y: -1 * unit },
+    ];
+    this.cellsPosByIndex = [
+      { x: 4, y: 0 },
+      { x: 5, y: 0 },
+      { x: 6, y: 0 },
+      { x: 6, y: -1 },
+    ];
+    this.cellsShadowIndex = [];
+    this.autoFall; // interval to fall down
+    this.fallTime = 1000;
+    this.stopped = false;
+    this.angle = 0; // used for (rotate) function
+  }
+
+  rotate() {
+    // rotate with Clockwise
+
+    // remove the block from the grid
+    this.removeFromGrid();
+
+    // save the current position
+    let savedIndexs = new Array();
+    this.cellsPosByIndex.forEach((pos) => {
+      savedIndexs.push({ ...pos });
+    });
+
+    // Change Position By Index
+    /* Used (this.cellsPosByIndex[-].x) in conditions to prevent setting values on:
+     (gridCols[-n]) , (gridCols[colsCount + n]) or (gridCols[-][rowsCount + n]) */
+    if (this.angle == 0 && this.cellsPosByIndex[0].y < rowsCount - 1) {
+      this.cellsPosByIndex[0].x += 1;
+      this.cellsPosByIndex[0].y -= 1;
+
+      this.cellsPosByIndex[2].x -= 1;
+      this.cellsPosByIndex[2].y += 1;
+
+      this.cellsPosByIndex[3].y += 2;
+    } else if (this.angle == 90 && this.cellsPosByIndex[0].x > 0) {
+      this.cellsPosByIndex[0].x += 1;
+      this.cellsPosByIndex[0].y += 1;
+
+      this.cellsPosByIndex[2].x -= 1;
+      this.cellsPosByIndex[2].y -= 1;
+
+      this.cellsPosByIndex[3].x -= 2;
+    } else if (this.angle == 180) {
+      this.cellsPosByIndex[0].x -= 1;
+      this.cellsPosByIndex[0].y += 1;
+
+      this.cellsPosByIndex[2].x += 1;
+      this.cellsPosByIndex[2].y -= 1;
+
+      this.cellsPosByIndex[3].y -= 2;
+    } else if (this.angle == 270 && this.cellsPosByIndex[0].x < colsCount - 1) {
+      // W cell
+      this.cellsPosByIndex[0].x -= 1;
+      this.cellsPosByIndex[0].y -= 1;
+      // A cell
+      this.cellsPosByIndex[2].x += 1;
+      this.cellsPosByIndex[2].y += 1;
+      // D cell
+      this.cellsPosByIndex[3].x += 2;
+    } else {
+      // no rotate so reduce the angle because it will be increased in the end of the methode
+      this.angle -= 90;
+    }
+
+    // if the block is stucked get the old postion back
+    for (let i = 0; i < this.cellsPosByIndex.length; i++) {
+      if (
+        gridCols[this.cellsPosByIndex[i].x][this.cellsPosByIndex[i].y] !==
+        undefined
+      ) {
+        this.cellsPosByIndex = savedIndexs;
+        this.angle -= 90;
+        break;
+      }
+    }
+
+    // refresh the position
+    this.changePos();
+    // Change The Angle
+    this.angle += 90;
+    if (this.angle == 360) {
+      this.angle = 0;
+    }
+  }
+
+  stuckedDown() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2]
+        );
+      case 90:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 180:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedLeft() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2]
+        );
+      case 180:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedRight() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+      case 180:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2]
+        );
+    }
+  }
+}
+
+// Create the (Blue Ricky) Block
+class BlueRicky extends Smashboy {
+  constructor() {
+    super();
+    this.color = "darkblue";
+    this.cells = new Array(); // cells will be added on creating the block
+    // the position of every cell [x,y]
+    this.cellsPosByPixel = [
+      { x: 4 * unit, y: 0 },
+      { x: 5 * unit, y: 0 },
+      { x: 6 * unit, y: 0 },
+      { x: 4 * unit, y: -1 * unit },
+    ];
+    this.cellsPosByIndex = [
+      { x: 4, y: 0 },
+      { x: 5, y: 0 },
+      { x: 6, y: 0 },
+      { x: 4, y: -1 },
+    ];
+    this.cellsShadowIndex = [];
+    this.autoFall; // interval to fall down
+    this.fallTime = 1000;
+    this.stopped = false;
+    this.angle = 0; // used for (rotate) function
+  }
+
+  rotate() {
+    // rotate with Clockwise
+
+    // remove the block from the grid
+    this.removeFromGrid();
+
+    // save the current position
+    let savedIndexs = new Array();
+    this.cellsPosByIndex.forEach((pos) => {
+      savedIndexs.push({ ...pos });
+    });
+
+    // Change Position By Index
+    /* Used (this.cellsPosByIndex[-].x) in conditions to prevent setting values on:
+     (gridCols[-n]) , (gridCols[colsCount + n]) or (gridCols[-][rowsCount + n]) */
+    if (this.angle == 0 && this.cellsPosByIndex[0].y < rowsCount - 1) {
+      this.cellsPosByIndex[0].x += 1;
+      this.cellsPosByIndex[0].y -= 1;
+
+      this.cellsPosByIndex[2].x -= 1;
+      this.cellsPosByIndex[2].y += 1;
+
+      this.cellsPosByIndex[3].x += 2;
+    } else if (this.angle == 90 && this.cellsPosByIndex[0].x > 0) {
+      this.cellsPosByIndex[0].x += 1;
+      this.cellsPosByIndex[0].y += 1;
+
+      this.cellsPosByIndex[2].x -= 1;
+      this.cellsPosByIndex[2].y -= 1;
+
+      this.cellsPosByIndex[3].y += 2;
+    } else if (this.angle == 180) {
+      this.cellsPosByIndex[0].x -= 1;
+      this.cellsPosByIndex[0].y += 1;
+
+      this.cellsPosByIndex[2].x += 1;
+      this.cellsPosByIndex[2].y -= 1;
+
+      this.cellsPosByIndex[3].x -= 2;
+    } else if (this.angle == 270 && this.cellsPosByIndex[0].x < colsCount - 1) {
+      // W cell
+      this.cellsPosByIndex[0].x -= 1;
+      this.cellsPosByIndex[0].y -= 1;
+      // A cell
+      this.cellsPosByIndex[2].x += 1;
+      this.cellsPosByIndex[2].y += 1;
+      // D cell
+      this.cellsPosByIndex[3].y -= 2;
+    } else {
+      // no rotate so reduce the angle because it will be increased in the end of the methode
+      this.angle -= 90;
+    }
+
+    // if the block is stucked get the old postion back
+    for (let i = 0; i < this.cellsPosByIndex.length; i++) {
+      if (
+        gridCols[this.cellsPosByIndex[i].x][this.cellsPosByIndex[i].y] !==
+        undefined
+      ) {
+        this.cellsPosByIndex = savedIndexs;
+        this.angle -= 90;
+        break;
+      }
+    }
+
+    // refresh the position
+    this.changePos();
+    // Change The Angle
+    this.angle += 90;
+    if (this.angle == 360) {
+      this.angle = 0;
+    }
+  }
+
+  stuckedDown() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2]
+        );
+      case 90:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 180:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedLeft() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2]
+        );
+      case 180:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedRight() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 180:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[3]
+        );
+      case 270:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[2]
+        );
+    }
+  }
+}
+
+// Create the (Cleveland Z) Block
+class ClevelandZ extends Smashboy {
+  constructor() {
+    super();
+    this.color = "red";
+    this.cells = new Array(); // cells will be added on creating the block
+    // the position of every cell [x,y]
+    this.cellsPosByPixel = [
+      { x: 4 * unit, y: -1 * unit },
+      { x: 5 * unit, y: -1 * unit },
+      { x: 5 * unit, y: 0 },
+      { x: 6 * unit, y: 0 },
+    ];
+    this.cellsPosByIndex = [
+      { x: 4, y: -1 },
+      { x: 5, y: -1 },
+      { x: 5, y: 0 },
+      { x: 6, y: 0 },
+    ];
+    this.cellsShadowIndex = [];
+    this.autoFall; // interval to fall down
+    this.fallTime = 1000;
+    this.stopped = false;
+    this.angle = 0; // used for (rotate) function
+  }
+
+  rotate() {
+    // rotate with Clockwise
+
+    // remove the block from the grid
+    this.removeFromGrid();
+
+    // save the current position
+    let savedIndexs = new Array();
+    this.cellsPosByIndex.forEach((pos) => {
+      savedIndexs.push({ ...pos });
+    });
+
+    // Change Position By Index
+    /* Used (this.cellsPosByIndex[-].x) in conditions to prevent setting values on:
+     (gridCols[-n]) , (gridCols[colsCount + n]) or (gridCols[-][rowsCount + n]) */
+    if (this.angle == 0) {
+      this.cellsPosByIndex[0].x += 2;
+      this.cellsPosByIndex[0].y -= 1;
+
+      this.cellsPosByIndex[1].x += 1;
+
+      this.cellsPosByIndex[2].y -= 1;
+
+      this.cellsPosByIndex[3].x -= 1;
+    } else if (this.angle == 90 && this.cellsPosByIndex[2].x > 0) {
+      this.cellsPosByIndex[0].x -= 2;
+      this.cellsPosByIndex[0].y += 1;
+
+      this.cellsPosByIndex[1].x -= 1;
+
+      this.cellsPosByIndex[2].y += 1;
+
+      this.cellsPosByIndex[3].x += 1;
+    } else {
+      // no rotate so reduce the angle because it will be increased in the end of the methode
+      this.angle -= 90;
+    }
+
+    // if the block is stucked get the old postion back
+    for (let i = 0; i < this.cellsPosByIndex.length; i++) {
+      if (
+        gridCols[this.cellsPosByIndex[i].x][this.cellsPosByIndex[i].y] !==
+        undefined
+      ) {
+        this.cellsPosByIndex = savedIndexs;
+        this.angle -= 90;
+        break;
+      }
+    }
+
+    // refresh the position
+    this.changePos();
+    // Change The Angle
+    this.angle += 90;
+    if (this.angle == 180) {
+      this.angle = 0;
+    }
+  }
+
+  stuckedDown() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedLeft() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[2]
+        );
+      case 90:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedRight() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+}
+
+// Create the (Rhode Island Z) Block
+class RhodeIslandZ extends Smashboy {
+  constructor() {
+    super();
+    this.color = "lightblue";
+    this.cells = new Array(); // cells will be added on creating the block
+    // the position of every cell [x,y]
+    this.cellsPosByPixel = [
+      { x: 6 * unit, y: -1 * unit },
+      { x: 5 * unit, y: -1 * unit },
+      { x: 5 * unit, y: 0 },
+      { x: 4 * unit, y: 0 },
+    ];
+    this.cellsPosByIndex = [
+      { x: 6, y: -1 },
+      { x: 5, y: -1 },
+      { x: 5, y: 0 },
+      { x: 4, y: 0 },
+    ];
+    this.cellsShadowIndex = [];
+    this.autoFall; // interval to fall down
+    this.fallTime = 1000;
+    this.stopped = false;
+    this.angle = 0; // used for (rotate) function
+  }
+
+  rotate() {
+    // rotate with Clockwise
+
+    // remove the block from the grid
+    this.removeFromGrid();
+
+    // save the current position
+    let savedIndexs = new Array();
+    this.cellsPosByIndex.forEach((pos) => {
+      savedIndexs.push({ ...pos });
+    });
+
+    // Change Position By Index
+    /* Used (this.cellsPosByIndex[-].x) in conditions to prevent setting values on:
+     (gridCols[-n]) , (gridCols[colsCount + n]) or (gridCols[-][rowsCount + n]) */
+    if (this.angle == 0) {
+      this.cellsPosByIndex[0].y += 1;
+
+      this.cellsPosByIndex[1].x += 1;
+
+      this.cellsPosByIndex[2].y -= 1;
+
+      this.cellsPosByIndex[3].x += 1;
+      this.cellsPosByIndex[3].y -= 2;
+    } else if (this.angle == 90 && this.cellsPosByIndex[2].x > 0) {
+      this.cellsPosByIndex[0].y -= 1;
+
+      this.cellsPosByIndex[1].x -= 1;
+
+      this.cellsPosByIndex[2].y += 1;
+
+      this.cellsPosByIndex[3].x -= 1;
+      this.cellsPosByIndex[3].y += 2;
+    } else {
+      // no rotate so reduce the angle because it will be increased in the end of the methode
+      this.angle -= 90;
+    }
+
+    // if the block is stucked get the old postion back
+    for (let i = 0; i < this.cellsPosByIndex.length; i++) {
+      if (
+        gridCols[this.cellsPosByIndex[i].x][this.cellsPosByIndex[i].y] !==
+        undefined
+      ) {
+        this.cellsPosByIndex = savedIndexs;
+        this.angle -= 90;
+        break;
+      }
+    }
+
+    // refresh the position
+    this.changePos();
+    // Change The Angle
+    this.angle += 90;
+    if (this.angle == 180) {
+      this.angle = 0;
+    }
+  }
+
+  stuckedDown() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "down",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[2]
+        );
+    }
+  }
+  stuckedLeft() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+      case 90:
+        return ifStucked(
+          "left",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[2],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+  stuckedRight() {
+    switch (this.angle) {
+      case 0:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[2]
+        );
+      case 90:
+        return ifStucked(
+          "right",
+          this.cellsPosByIndex[0],
+          this.cellsPosByIndex[1],
+          this.cellsPosByIndex[3]
+        );
+    }
+  }
+}
+
 // Insert a new random block
-let blocks = [Smashboy, Hero, Teewee],
+let blocks = [
+    Smashboy,
+    Hero,
+    Teewee,
+    OrangeRicky,
+    BlueRicky,
+    ClevelandZ,
+    RhodeIslandZ,
+  ],
   currentBlock;
 function newBlock() {
-  // currentBlock = new WASD();
   currentBlock = new blocks[Math.floor(Math.random() * blocks.length)]();
   currentBlock.createBlock();
 }
