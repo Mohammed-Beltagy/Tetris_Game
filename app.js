@@ -5,8 +5,12 @@ const grid = document.getElementById("grid"),
 // Get the with of Cells from CSS.. Depends on Screen Size
 let unit = parseFloat(getComputedStyle(grid).getPropertyValue("--unit"));
 // Create the Background of the game
-let colsCount = 11,
-  rowsCount = 21;
+let colsCount = parseFloat(
+    getComputedStyle(grid).getPropertyValue("--cols-count")
+  ),
+  rowsCount = parseFloat(
+    getComputedStyle(grid).getPropertyValue("--rows-count")
+  );
 for (let i = 1; i < rowsCount; i++) {
   let horizontalLine = document.createElement("div");
   horizontalLine.className = "horizontal-line";
@@ -84,8 +88,8 @@ function ifStucked(direction, ...cellsIndex) {
 
 // Create the (Square) block
 class Smashboy {
-  constructor() {
-    this.color = "green";
+  constructor(color) {
+    this.color = color;
     this.cells = new Array(); // cells will be added on creating the block
     this.cellsShadow = new Array(); // shadow will be added on creating the block
     // the position of every cell [x,y]
@@ -106,52 +110,104 @@ class Smashboy {
     this.fallTime = 1000;
     this.stopped = false;
   }
+  // Create Block And Add It To PlayGround
   createBlock() {
-    // create the Cells
-    for (let i = 0; i < 4; i++) {
-      let cell = document.createElement("div");
-
-      cell.classList = "cell";
-      cell.style.backgroundColor = this.color;
-
-      playground.append(cell);
-      this.cells.push(cell);
-    }
-    // create the Cells Shadow
-    for (let i = 0; i < 4; i++) {
-      let shadow = document.createElement("div");
-
-      shadow.classList = "cell-shadow";
-      shadow.style.backgroundColor = this.color;
-
-      background.append(shadow);
-      this.cellsShadow.push(shadow);
-    }
-    // append Cells to the Array
-    this.cells.forEach((cell, index) => {
-      // position every cell depending on (cellsPos) Array
-      cell.style.left = this.cellsPosByPixel[index].x + "px";
-      cell.style.top = this.cellsPosByPixel[index].y + "px";
-      // position every cell in (gridCols) Array
-      let posInArr = this.cellsPosByIndex[index];
-      // check if the position is free
-      if (gridCols[posInArr.x][posInArr.y] == undefined) {
-        gridCols[posInArr.x][posInArr.y] = cell;
-      } else {
+    // check if the col is full then end the game else append the block and create the shadow
+    this.cellsPosByIndex.forEach((pos) => {
+      if (gridCols[pos.x][pos.y] !== undefined) {
         colIsFull = true;
       }
     });
     // Check If Losed Or Not
     if (colIsFull) {
       endGame();
-      this.cellsShadow.forEach((cellShadow) => {
-        cellShadow.remove();
-      });
     } else {
+      // create the Cells
+      for (let i = 0; i < 4; i++) {
+        let cell = document.createElement("div");
+
+        cell.classList = "cell";
+        cell.style.backgroundColor = this.color;
+
+        playground.append(cell);
+        this.cells.push(cell);
+      }
+      this.changePos();
+      // create the Cells Shadow
+      for (let i = 0; i < 4; i++) {
+        let shadow = document.createElement("div");
+
+        shadow.classList = "cell-shadow";
+        shadow.style.backgroundColor = this.color;
+
+        background.append(shadow);
+        this.cellsShadow.push(shadow);
+      }
       this.setShadow();
       this.startMove();
+      holdedBefore = false;
     }
   }
+  // Show the Block In (Next & Hold)
+  showInContainer(containerId) {
+    // Clone the position
+    let cellsNewPos = new Array();
+    this.cellsPosByIndex.forEach((pos) => {
+      cellsNewPos.push({ ...pos });
+    });
+    // Change the position to start in x = 0, y = 0
+    function increaseY() {
+      cellsNewPos.forEach((pos) => {
+        if (pos.y < 0) {
+          cellsNewPos.forEach((position) => {
+            position.y += 1;
+          });
+          increaseY();
+        }
+      });
+    }
+    increaseY();
+    cellsNewPos.forEach((pos) => {
+      pos.x -= 10;
+    });
+    function increaseX() {
+      cellsNewPos.forEach((pos) => {
+        if (pos.x < 0) {
+          cellsNewPos.forEach((position) => {
+            position.x += 1;
+          });
+          increaseX();
+        }
+      });
+    }
+    increaseX();
+    // Create cells
+    let container = document.getElementById(containerId);
+    container.innerHTML = "";
+    for (let i = 0; i < 4; i++) {
+      let cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.style.backgroundColor = this.color;
+      cell.style.left = cellsNewPos[i].x * unit + "px";
+      cell.style.top = cellsNewPos[i].y * unit + "px";
+      container.appendChild(cell);
+    }
+    // Change Container Width
+    let cellsXPos = new Array();
+    cellsNewPos.forEach((pos) => {
+      cellsXPos.push(parseFloat(pos.x));
+    });
+    let maxCellsInRow = new Set(cellsXPos);
+    container.style.width = `calc(${maxCellsInRow.size} * var(--unit))`;
+    // Change Container Height
+    let cellsYPos = new Array();
+    cellsNewPos.forEach((pos) => {
+      cellsYPos.push(parseFloat(pos.y));
+    });
+    let maxCellsInCol = new Set(cellsYPos);
+    container.style.height = `calc(${maxCellsInCol.size} * var(--unit))`;
+  }
+  // Change The Shadow Position
   setShadow() {
     // set default value for shadow pos
     for (let i = 0; i < 4; i++) {
@@ -213,6 +269,18 @@ class Smashboy {
     // create new block
     checkIfCompleted();
     newBlock();
+  }
+  removeBlock() {
+    this.cells.forEach((cell) => {
+      cell.remove();
+    });
+    this.cellsShadow.forEach((shadow) => {
+      shadow.remove();
+    });
+    this.cellsPosByIndex.forEach((pos) => {
+      gridCols[pos.x][pos.y] = undefined;
+    });
+    clearInterval(this.autoFall);
   }
 
   /*  remove the block cells from (gridCols)
@@ -303,9 +371,8 @@ class Smashboy {
 
 // Create the (Row) block
 class Hero extends Smashboy {
-  constructor() {
-    super();
-    this.color = "darkviolet";
+  constructor(color) {
+    super(color);
     this.cells = new Array(); // cells will be added on creating the block
     // the position of every cell [x,y]
     this.cellsPosByPixel = [
@@ -449,9 +516,8 @@ class Hero extends Smashboy {
 
 // Create the (wasd) block
 class Teewee extends Smashboy {
-  constructor() {
-    super();
-    this.color = "yellow";
+  constructor(color) {
+    super(color);
     this.cells = new Array(); // cells will be added on creating the block
     // the position of every cell [x,y]
     this.cellsPosByPixel = [
@@ -648,9 +714,8 @@ class Teewee extends Smashboy {
 
 // Create the (Orange Ricky) Block
 class OrangeRicky extends Smashboy {
-  constructor() {
-    super();
-    this.color = "orange";
+  constructor(color) {
+    super(color);
     this.cells = new Array(); // cells will be added on creating the block
     // the position of every cell [x,y]
     this.cellsPosByPixel = [
@@ -840,9 +905,8 @@ class OrangeRicky extends Smashboy {
 
 // Create the (Blue Ricky) Block
 class BlueRicky extends Smashboy {
-  constructor() {
-    super();
-    this.color = "darkblue";
+  constructor(color) {
+    super(color);
     this.cells = new Array(); // cells will be added on creating the block
     // the position of every cell [x,y]
     this.cellsPosByPixel = [
@@ -1032,9 +1096,8 @@ class BlueRicky extends Smashboy {
 
 // Create the (Cleveland Z) Block
 class ClevelandZ extends Smashboy {
-  constructor() {
-    super();
-    this.color = "red";
+  constructor(color) {
+    super(color);
     this.cells = new Array(); // cells will be added on creating the block
     // the position of every cell [x,y]
     this.cellsPosByPixel = [
@@ -1170,9 +1233,8 @@ class ClevelandZ extends Smashboy {
 
 // Create the (Rhode Island Z) Block
 class RhodeIslandZ extends Smashboy {
-  constructor() {
-    super();
-    this.color = "lightblue";
+  constructor(color) {
+    super(color);
     this.cells = new Array(); // cells will be added on creating the block
     // the position of every cell [x,y]
     this.cellsPosByPixel = [
@@ -1308,21 +1370,69 @@ class RhodeIslandZ extends Smashboy {
 
 // Insert a new random block
 let blocks = [
-    Smashboy,
-    Hero,
-    Teewee,
-    OrangeRicky,
-    BlueRicky,
-    ClevelandZ,
-    RhodeIslandZ,
+    { block: Smashboy, color: "green" },
+    { block: Hero, color: "darkviolet" },
+    { block: Teewee, color: "yellow" },
+    { block: OrangeRicky, color: "orange" },
+    { block: BlueRicky, color: "darkblue" },
+    { block: ClevelandZ, color: "red" },
+    { block: RhodeIslandZ, color: "lightblue" },
   ],
-  currentBlock;
+  currentBlocks = new Array(4);
+// Set Next Blocks
+function chooseNextBlocks() {}
+for (let i = 1; i < currentBlocks.length; i++) {
+  let blockIndex = Math.floor(Math.random() * blocks.length);
+  currentBlocks[i] = new blocks[blockIndex].block(blocks[blockIndex].color);
+}
 function newBlock() {
-  currentBlock = new blocks[Math.floor(Math.random() * blocks.length)]();
-  currentBlock.createBlock();
+  // reduce the index of the next block
+  for (let i = 0; i < currentBlocks.length - 1; i++) {
+    currentBlocks[i] = currentBlocks[i + 1];
+  }
+  // choose new block for the third-next
+  let blockIndex = Math.floor(Math.random() * blocks.length);
+  currentBlocks[currentBlocks.length - 1] = new blocks[blockIndex].block(
+    blocks[blockIndex].color
+  );
+  // display the three next blocks
+  currentBlocks[1].showInContainer(`first-next`);
+  currentBlocks[2].showInContainer(`second-next`);
+  currentBlocks[3].showInContainer(`third-next`);
+  // create the Current Block
+  currentBlocks[0].createBlock();
+}
+//  Hold Block
+let holdedBlock,
+  holdedBefore = false; /* to prevent spamming on holding blocks 
+  => will be changed in (creatBlock & holdBlock())*/
+function holdBlock() {
+  if (holdedBefore) {
+    return;
+  }
+  currentBlocks[0].removeBlock();
+  if (holdedBlock === undefined) {
+    blocks.forEach((block, index) => {
+      if (block.block.name == currentBlocks[0].constructor.name) {
+        holdedBlock = new block.block(block.color);
+      }
+    });
+    newBlock();
+  } else {
+    let willBeHolded = currentBlocks[0].constructor.name;
+    currentBlocks[0] = holdedBlock;
+    blocks.forEach((block, index) => {
+      if (block.block.name == willBeHolded) {
+        holdedBlock = new block.block(block.color);
+      }
+    });
+    currentBlocks[0].createBlock();
+  }
+  holdedBlock.showInContainer("block-holder");
+  holdedBefore = true;
 }
 
-// end the game
+// End The Game
 let score = 0;
 function endGame() {
   grid.querySelector(".game-alert h1").innerText = `Score: ${score}`;
@@ -1336,36 +1446,43 @@ grid.querySelector(".game-alert button").onclick = function () {
   resetGrid();
   colIsFull = false;
   this.parentElement.style.display = "none";
+  chooseNextBlocks();
+  // reset holded block
+  holdedBlock = undefined;
+  document.getElementById("block-holder").innerHTML = "";
   newBlock();
 };
 
 // Adding Controls To Current Block
 window.addEventListener("keydown", (e) => {
-  if (currentBlock.stopped || colIsFull === true) {
+  if (currentBlocks[0].stopped || colIsFull === true) {
     return;
   }
   switch (e.keyCode) {
     case 83: /// s
     case 40: // down arrow
       // Reset the ramain time to fall down > move down
-      currentBlock.resetFallInterval();
-      currentBlock.move("down");
+      currentBlocks[0].resetFallInterval();
+      currentBlocks[0].move("down");
       break;
     case 65: // a
     case 37: // left arrow
-      currentBlock.move("left");
+      currentBlocks[0].move("left");
       break;
     case 68: // d
     case 39: // right arrow
-      currentBlock.move("right");
+      currentBlocks[0].move("right");
       break;
     case 87: // w
     case 38: // up arrow
-      currentBlock.move("rotate");
+      currentBlocks[0].move("rotate");
       break;
     case 32: // space
-      currentBlock.fallTime = 0;
-      currentBlock.resetFallInterval();
+      currentBlocks[0].fallTime = 0;
+      currentBlocks[0].resetFallInterval();
+      break;
+    case 16: // shift
+      holdBlock();
       break;
   }
 });
@@ -1409,4 +1526,5 @@ function checkIfCompleted() {
   }
 
   score += completedRowsIndex.length * 16;
+  document.querySelector("#score span").innerText = score;
 }

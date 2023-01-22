@@ -9,19 +9,37 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main id="grid" class="grid">
-      <div class="game-alert">
-        <h1>Tetris Game</h1>
-        <button>Start Game</button>
-      </div>
-      <div class="background">
-        <!-- The Style Of The Grid -->
-      </div>
-      <div class="playground">
-        <!-- Where The blocks Will Be By JS -->
-        <div class="cell"></div>
-      </div>
-    </main>
+    <div class="container">
+      <main id="grid" class="grid">
+        <div class="game-alert">
+          <h1>Tetris Game</h1>
+          <button>Start Game</button>
+        </div>
+        <div class="background">
+          <!-- The Style Of The Grid -->
+        </div>
+        <div class="playground">
+          <!-- Where The blocks Will Be By JS -->
+          <div class="cell"></div>
+        </div>
+      </main>
+      <aside>
+        <div id="next-blocks">
+          <h3>Next</h3>
+          <div id="first-next" class="block-container"></div>
+          <div id="second-next" class="block-container"></div>
+          <div id="third-next" class="block-container"></div>
+        </div>
+        <div id="score">
+          <h3>Score</h3>
+          <span>00</span>
+        </div>
+        <div id="block-holder-container">
+          <h3>Hold</h3>
+          <div id="block-holder" class="block-container"></div>
+        </div>
+      </aside>
+    </div>
 
     <script src="app.js"></script>
   </body>
