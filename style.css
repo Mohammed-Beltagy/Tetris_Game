@@ -23,7 +23,7 @@ body {
   gap: calc(var(--unit) / 2);
 }
 /* Change (unit) value for small media */
-@media (max-width: 575px) {
+@media (max-width: 575px), (max-height: 630px) {
   .container {
     --unit: 15px;
   }
@@ -58,6 +58,12 @@ body {
   color: #fff6;
   padding: 10px;
 }
+/* remove for Touch Devices */
+@media (pointer: none), (pointer: coarse) {
+  .grid::after {
+    display: none;
+  }
+}
 
 /* Game Alert Design */
 .grid .game-alert {
@@ -71,6 +77,7 @@ body {
 }
 .game-alert h1 {
   color: #fff;
+  text-align: center;
 }
 .game-alert button {
   padding: 5px;
@@ -125,4 +132,32 @@ aside > div {
 .block-container {
   position: relative;
   margin-bottom: 10px;
+}
+
+/*  ==================
+    3. Touch Constrols
+    ==================  */
+.controls {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px;
+}
+@media (pointer: none), (pointer: coarse) {
+  .controls {
+    display: flex;
+  }
+}
+.controls > div {
+  margin: 0 3px;
+  padding: 10px;
+  background-color: #444;
+  border: solid #ddd 1px;
+  border-radius: 3px;
+}
+.controls .instant-fall {
+  margin-left: auto;
 }

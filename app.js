@@ -11,18 +11,32 @@ let colsCount = parseFloat(
   rowsCount = parseFloat(
     getComputedStyle(grid).getPropertyValue("--rows-count")
   );
-for (let i = 1; i < rowsCount; i++) {
-  let horizontalLine = document.createElement("div");
-  horizontalLine.className = "horizontal-line";
-  horizontalLine.style.bottom = `${i * unit}px`;
-  background.append(horizontalLine);
+function displayBackground() {
+  unit = parseFloat(getComputedStyle(grid).getPropertyValue("--unit"));
+  // remove old line then creat new
+  let horizontalLines = document.getElementsByClassName("horizontal-line"),
+    verticalLines = document.getElementsByClassName("vertical-line");
+  if (horizontalLines.length > 0) {
+    lines = Array.from(horizontalLines).forEach((line) => line.remove());
+  }
+  if (verticalLines.length > 0) {
+    lines = Array.from(verticalLines).forEach((line) => line.remove());
+  }
+  for (let i = 1; i < rowsCount; i++) {
+    let horizontalLine = document.createElement("div");
+    horizontalLine.className = "horizontal-line";
+    horizontalLine.style.bottom = `${i * unit}px`;
+    background.append(horizontalLine);
+  }
+  for (let i = 1; i < colsCount; i++) {
+    let verticalLine = document.createElement("div");
+    verticalLine.className = "vertical-line";
+    verticalLine.style.left = `${i * unit}px`;
+    background.append(verticalLine);
+  }
 }
-for (let i = 1; i < colsCount; i++) {
-  let verticalLine = document.createElement("div");
-  verticalLine.className = "vertical-line";
-  verticalLine.style.left = `${i * unit}px`;
-  background.append(verticalLine);
-}
+displayBackground();
+window.addEventListener("resize", displayBackground);
 
 // Create Grid from arrs to save the position of block
 let gridCols; // gridCols[x,y]
@@ -1485,6 +1499,33 @@ window.addEventListener("keydown", (e) => {
       holdBlock();
       break;
   }
+});
+// Controls For Touch Devices
+Array.from(document.getElementById("controls").children).forEach((btn) => {
+  btn.addEventListener("touchstart", () => {
+    switch (btn.className) {
+      case "down":
+        currentBlocks[0].resetFallInterval();
+        currentBlocks[0].move("down");
+        break;
+      case "left":
+        currentBlocks[0].move("left");
+        break;
+      case "right":
+        currentBlocks[0].move("right");
+        break;
+      case "rotate":
+        currentBlocks[0].move("rotate");
+        break;
+      case "instant-fall":
+        currentBlocks[0].fallTime = 0;
+        currentBlocks[0].resetFallInterval();
+        break;
+      case "hold":
+        holdBlock();
+        break;
+    }
+  });
 });
 
 // Check If There Are Completed Rows
