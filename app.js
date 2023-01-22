@@ -53,8 +53,10 @@ function resetGrid() {
   }
 }
 
-// will be changed to true if the is no space for the current block
-let colIsFull = false;
+// Need Variables In Game
+let colIsFull = false, // will be changed to true if the is no space for the current block
+  difficulty = 1,
+  fallTime = 1000 / difficulty;
 
 // Check If The Cells Are Stucked Or Not Depending on Index {x: -, y: -}
 function ifStucked(direction, ...cellsIndex) {
@@ -121,7 +123,6 @@ class Smashboy {
     ];
     this.cellsShadowIndex = [];
     this.autoFall; // interval to fall down
-    this.fallTime = 1000;
     this.stopped = false;
   }
   // Create Block And Add It To PlayGround
@@ -266,7 +267,7 @@ class Smashboy {
     // Auto Fall Interval
     this.autoFall = setInterval(() => {
       this.move("down");
-    }, this.fallTime);
+    }, fallTime);
   }
   resetFallInterval() {
     clearInterval(this.autoFall);
@@ -280,6 +281,8 @@ class Smashboy {
     this.cellsShadow.forEach((cellShadow) => {
       cellShadow.remove();
     });
+    // reset Fall Time if (instant fall) used
+    fallTime = 1000 / difficulty;
     // create new block
     checkIfCompleted();
     newBlock();
@@ -403,7 +406,6 @@ class Hero extends Smashboy {
     ];
     this.cellsShadowIndex = [];
     this.autoFall; // interval to fall down
-    this.fallTime = 1000;
     this.stopped = false;
     this.angle = 0; // used for (rotate) function
   }
@@ -548,7 +550,6 @@ class Teewee extends Smashboy {
     ];
     this.cellsShadowIndex = [];
     this.autoFall; // interval to fall down
-    this.fallTime = 1000;
     this.stopped = false;
     this.angle = 0; // used for (rotate) function
   }
@@ -746,7 +747,6 @@ class OrangeRicky extends Smashboy {
     ];
     this.cellsShadowIndex = [];
     this.autoFall; // interval to fall down
-    this.fallTime = 1000;
     this.stopped = false;
     this.angle = 0; // used for (rotate) function
   }
@@ -937,7 +937,6 @@ class BlueRicky extends Smashboy {
     ];
     this.cellsShadowIndex = [];
     this.autoFall; // interval to fall down
-    this.fallTime = 1000;
     this.stopped = false;
     this.angle = 0; // used for (rotate) function
   }
@@ -1128,7 +1127,6 @@ class ClevelandZ extends Smashboy {
     ];
     this.cellsShadowIndex = [];
     this.autoFall; // interval to fall down
-    this.fallTime = 1000;
     this.stopped = false;
     this.angle = 0; // used for (rotate) function
   }
@@ -1265,7 +1263,6 @@ class RhodeIslandZ extends Smashboy {
     ];
     this.cellsShadowIndex = [];
     this.autoFall; // interval to fall down
-    this.fallTime = 1000;
     this.stopped = false;
     this.angle = 0; // used for (rotate) function
   }
@@ -1492,7 +1489,7 @@ window.addEventListener("keydown", (e) => {
       currentBlocks[0].move("rotate");
       break;
     case 32: // space
-      currentBlocks[0].fallTime = 0;
+      fallTime = 0;
       currentBlocks[0].resetFallInterval();
       break;
     case 16: // shift
@@ -1518,7 +1515,7 @@ Array.from(document.getElementById("controls").children).forEach((btn) => {
         currentBlocks[0].move("rotate");
         break;
       case "instant-fall":
-        currentBlocks[0].fallTime = 0;
+        fallTime = 0;
         currentBlocks[0].resetFallInterval();
         break;
       case "hold":
@@ -1566,6 +1563,9 @@ function checkIfCompleted() {
     }
   }
 
-  score += completedRowsIndex.length * 16;
+  score += completedRowsIndex.length * Math.ceil(Math.random() * 64);
   document.querySelector("#score span").innerText = score;
+
+  difficulty = 1 + Math.floor(score / 500) / 2;
+  // score: 500 => difficulty: 1.5, 1000 => 2, 1500 => 2.5, ...
 }
