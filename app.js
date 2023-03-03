@@ -1381,13 +1381,13 @@ class RhodeIslandZ extends Smashboy {
 
 // Insert a new random block
 let blocks = [
-    { block: Smashboy, color: "green" },
-    { block: Hero, color: "darkviolet" },
-    { block: Teewee, color: "yellow" },
-    { block: OrangeRicky, color: "orange" },
-    { block: BlueRicky, color: "darkblue" },
-    { block: ClevelandZ, color: "red" },
-    { block: RhodeIslandZ, color: "lightblue" },
+    { block: Smashboy, color: "#00c100" },
+    { block: Hero, color: "#d27ef7" },
+    { block: Teewee, color: "#ffff00" },
+    { block: OrangeRicky, color: "#ffbf4a" },
+    { block: BlueRicky, color: "#6b6bff" },
+    { block: ClevelandZ, color: "#ff7b7b" },
+    { block: RhodeIslandZ, color: "#21c9ff" },
   ],
   currentBlocks = new Array(4);
 // Set Next Blocks
